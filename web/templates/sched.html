@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1> {{headline}} </h1>
+    <!jinja2>
+    <table>
+        <tr>
+            <td>time</td>
+            {% for mark in times %}
+                <td>{{mark}}</td>
+            {% endfor %}    
+        </tr>
+        {% for day in days %}
+            <td>{{day}}</td>
+            {% for data in daydata[loop.index0] %}
+                <td>{{data}}</td>
+            {% endfor %}    
+        {% endfor %}
+    </table>
+    <a href="{{ url_for('index') }}">back to scheds</a>
+</body>
+</html>
