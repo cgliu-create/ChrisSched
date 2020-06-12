@@ -1,4 +1,5 @@
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, request
+import os
 from data import *
 
 app = Flask(__name__)
@@ -38,6 +39,28 @@ def createNewWeek(theweek):
     db.session.add(new_week)
     db.session.commit()
     new_week.createWeek()
+
+
+# given a name of a recorded week
+# deletes all data associated with it
+def deleteWeek(theweek):
+    weeks = listWeekNames()
+    if theweek not in weeks:
+        raise Exception('INVALID WEEK')
+    db.session.execute('''
+    DELETE FROM hours WHERE id IN
+        (SELECT hours.id FROM hours WHERE hours.day IN
+            (SELECT days.id FROM days WHERE days.week IN
+                (SELECT id FROM weeks WHERE weeks.week=(:week))))
+     ''', {'week': theweek})
+    db.session.execute('''
+    DELETE FROM days WHERE id IN
+        (SELECT days.id FROM days WHERE days.week IN
+            (SELECT id FROM weeks WHERE weeks.week=(:week)))
+    ''', {'week': theweek})
+    db.session.execute('''
+    DELETE FROM weeks WHERE weeks.week=(:week)
+    ''', {'week': theweek})
 
 
 # given the name of a recorded week and day
@@ -116,13 +139,13 @@ def scheds():
     return render_template("sched.html", headline=week, times=times, days=days, daydata=daydata)
 
 
-if __name__ == '__main__':
-    app.run()
+# testing
 if __name__ == '__main__':
     with app.app_context():
-        createNewWeek('another')
-        print(listWeekNames())
-        changeHourColor('another', 'mon', 1, 'blue')
         printAll()
-        print(getWeeKDayColors('another', 'mon'))
+        deleteWeek('test')
+        printAll()
 
+# running web app
+# if __name__ == '__main__':
+#     app.run()
