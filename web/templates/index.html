@@ -1,20 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
-<link rel="stylesheet" href="style.css">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
 </head>
 <body>
-    <form action="{{ url_for('scheds') }}" method="post">
+    <form action="{{ url_for('scheds')}}" method="get">
         <select name="schedule">
             {% for sched in scheds %}
                 <option value="{{sched}}">{{sched}}</option>
             {% endfor %}
-            </select>
-        <button>choose sched</button>
+        </select>
+        <button>go</button>
+    </form>
+
+    <form action="{{ url_for('index')}}" method="post">
+        <select name="command">
+            <option value='create'>create</option>
+            <option value='delete'>delete</option>
+        </select>
+        <input type="text" name="schedule" placeholder="Enter Name">
+        <button>change</button>
     </form>
 </body>
 </html>
-    

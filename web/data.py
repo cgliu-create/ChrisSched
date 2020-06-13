@@ -40,44 +40,34 @@ class Hour(db.Model):
     color = db.Column(db.String, nullable=False)
 
 
-# this is a dictionary of color codes
-def getColorCode(name):
-    color_list = {
-        'white': '#ffffff',
-        'black': '#000000',
-        'red': '#ff0000',
-        'orange': '#ffb600',
-        'yellow': '#fff700',
-        'green': '#09ff00',
-        'blue': '#0059ff',
-        'purple': '#9d00ff',
-        'pink': '#ff00e1',
-        'darkred': '#a10000',
-        'darkorange': '#bd8700',
-        'darkyellow': '#c9c300',
-        'darkgreen': '#07c900',
-        'darkblue': '#003fb5',
-        'darkpurple': '#7300ba',
-        'darkpink': '#bd00a6'
-    }
-    return color_list.get(name)
-
-
-# this is a dictionary for day abbreviations
-def getDayName(abbrev):
+class convert:
+    # this is a dictionary for day abbreviations
     day_list = {
         'mon': 'Monday', 'tue': 'Tuesday', 'wed': 'Wednesday', 'thu': 'Thursday', 'fri': 'Friday',
         'sat': 'Saturday', 'sun': 'Sunday'
     }
-    return day_list.get(abbrev)
-
-
-# this is a dictionary for 12hr conversion
-def getTwelveHr(num):
+    # this is a dictionary for 12hr conversion
     hr_list = {
         1: '1 am', 2: '2 am', 3: '3 am', 4: '4 am', 5: '5 am', 6: '6 am',
         7: '7 am', 8: '8 am', 9: '9 am', 10: '10 am', 11: '11 am', 12: '12 pm',
         13: '1 pm', 14: '2 pm', 15: '3 pm', 16: '4 pm', 17: '5 pm', 18: '6 pm',
         19: '7 pm', 20: '8 pm', 21: '9 pm', 22: '10 pm', 23: '11 pm', 24: '12 am'
     }
-    return hr_list.get(num)
+
+    def getDayName(self, abbrev):
+        return self.day_list.get(abbrev)
+
+    def getDayAbbrev(self, name):
+        abbrev_list = list(self.day_list.keys())
+        name_list = list(self.day_list.values())
+        index = name_list.index(name)
+        return abbrev_list[index]
+
+    def get12Hr(self, num):
+        return self.hr_list.get(num)
+
+    def get24Hr(self, time):
+        list24 = list(self.hr_list.keys())
+        list12 = list(self.hr_list.values())
+        index = list12.index(time)
+        return list24[index]

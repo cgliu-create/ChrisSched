@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+<link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/style.css') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,19 +10,61 @@
     <h1> {{headline}} </h1>
     <!jinja2>
     <table>
-        <tr>
-            <td>time</td>
-            {% for mark in times %}
+        <tr >
+            <td> </td>
+            {% for mark in data[1] %}
                 <td>{{mark}}</td>
             {% endfor %}    
         </tr>
-        {% for day in days %}
-            <td>{{day}}</td>
-            {% for data in daydata[loop.index0] %}
-                <td>{{data}}</td>
-            {% endfor %}    
+        {% for day in data[3] %}
+        <tr>
+            <td class='box'>{{day}}</td>
+            {% for data in data[4][loop.index0] %}
+                {% if data == 'red' %}
+                    <td class='red box'>{{data}}</td>
+                {% elif data == 'orange' %}
+                    <td class='orange box'>{{data}}</td>
+                {% elif data == 'yellow' %}
+                    <td class='yellow box'>{{data}}</td>
+                {% elif data == 'green' %}
+                    <td class='green box'>{{data}}</td>
+                {% elif data == 'blue' %}
+                    <td class='blue box'>{{data}}</td>
+                {% elif data == 'purple' %}
+                    <td class='purple box'>{{data}}</td>
+                {% elif data == 'pink' %}
+                    <td class='pink box'>{{data}}</td>
+                {% else %}
+                    <td class='white box'>{{data}}</td>
+                {% endif %}
+            {% endfor %}
+        <tr>
         {% endfor %}
     </table>
+    <form action="{{ url_for('scheds')}}" method="post">
+        CHANGE SCHED
+        <select name="schedule">
+            {% for sched in data[6] %}
+                <option value="{{sched}}">{{sched}}</option>
+            {% endfor %}
+        </select>
+        <select name="day">
+            {% for day in data[2] %}
+                <option value="{{day}}">{{day}}</option>
+            {% endfor %}
+        </select>
+        <select name="hour">
+            {% for mark in data[0] %}
+                <option value="{{mark}}">{{mark}}</option>
+            {% endfor %}
+        </select>
+        <select name="color">
+            {% for color in data[5] %}
+                <option value="{{color}}">{{color}}</option>
+            {% endfor %}
+        </select>
+        <button>change</button>
+    </form>
     <a href="{{ url_for('index') }}">back to scheds</a>
 </body>
 </html>

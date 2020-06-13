@@ -6,7 +6,13 @@ app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
+days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
+colors = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink']
 
+
+#
+# FUNCTIONS THAT MANAGE DATA
+#
 
 # prints out everything stored in the tables
 def printAll():
@@ -33,7 +39,7 @@ def listWeekNames():
 # creates a new default week
 def createNewWeek(theweek):
     weeks = listWeekNames()
-    if theweek not in weeks:
+    if theweek in weeks:
         raise Exception('NAME TAKEN')
     new_week = Week(week=theweek)
     db.session.add(new_week)
@@ -53,14 +59,17 @@ def deleteWeek(theweek):
             (SELECT days.id FROM days WHERE days.week IN
                 (SELECT id FROM weeks WHERE weeks.week=(:week))))
      ''', {'week': theweek})
+    db.session.commit()
     db.session.execute('''
     DELETE FROM days WHERE id IN
         (SELECT days.id FROM days WHERE days.week IN
             (SELECT id FROM weeks WHERE weeks.week=(:week)))
     ''', {'week': theweek})
+    db.session.commit()
     db.session.execute('''
     DELETE FROM weeks WHERE weeks.week=(:week)
     ''', {'week': theweek})
+    db.session.commit()
 
 
 # given the name of a recorded week and day
@@ -69,7 +78,6 @@ def getWeeKDayColors(theweek, theday):
     weeks = listWeekNames()
     if theweek not in weeks:
         raise Exception('INVALID WEEK')
-    days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
     if theday not in days:
         raise Exception('INVALID DAY')
     data = db.session.execute('''
@@ -88,7 +96,6 @@ def changeHourColor(theweek, theday, thehour, thecolor):
     weeks = listWeekNames()
     if theweek not in weeks:
         raise Exception('INVALID WEEK')
-    days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
     if theday not in days:
         raise Exception('INVALID DAY')
     if thehour < 1 or thehour > 24:
@@ -111,41 +118,92 @@ def changeHourColor(theweek, theday, thehour, thecolor):
         db.session.commit()
 
 
+def getSchedData(theweek):
+    data = []
+    timemarks = range(1, 25)
+    data.append(timemarks)
+    convert12 = lambda num: convert().get12Hr(num=num)
+    data.append(map(convert12, timemarks))
+    data.append(days)
+    convertDay = lambda abbrev: convert().getDayName(abbrev=abbrev)
+    data.append(map(convertDay, days))
+    daydata = []
+    for day in days:
+        weekcolors = getWeeKDayColors(theweek, day)
+        for sublist in range(len(weekcolors)):
+            weekcolors[sublist] = weekcolors[sublist][1]
+        daydata.append(weekcolors)
+    data.append(daydata)
+    data.append(colors)
+    weeks = listWeekNames()
+    data.append(weeks)
+    return data
+
+
 # creates the tables
 def createModel():
     db.create_all()
 
 
-# web pages
-@app.route("/")
+#
+# WEB PAGES
+#
+
+
+# this is the home page
+# it can select a schedule to dislay
+# it can create and delete schedules
+@app.route("/", methods=["POST", "GET"])
 def index():
-    weeks = listWeekNames()
-    return render_template("index.html", scheds=weeks)
+    if request.method == 'POST':
+        theweek = request.form.get('schedule')
+        thecommand = request.form.get('command')
+        weeks = listWeekNames()
+        if thecommand == 'create':
+            if theweek in weeks:
+                return render_template("message.html", message='NAME TAKEN')
+            createNewWeek(theweek)
+        if thecommand == 'delete':
+            if theweek not in weeks:
+                return render_template("message.html", message='INVALID WEEK')
+            deleteWeek(theweek)
+        return render_template("message.html", message="COMPLETE")
+    else:
+        weeks = listWeekNames()
+        return render_template("index.html", scheds=weeks)
 
 
-@app.route("/scheds", methods=["POST"])
+# this is the schedule display
+# it can edit the colors recorded for the schedile 
+@app.route("/scheds", methods=["POST", "GET"])
 def scheds():
-    # Get form information.
-    week = request.form.get('schedule')
-    days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
-    daydata = []
-    for day in days:
-        data = getWeeKDayColors(week, day)
-        daydata.append(data)
-    days = map(getDayName, days)
-    times = []
-    for i in range(1, 25):
-        times.append(getTwelveHr(i))
-    return render_template("sched.html", headline=week, times=times, days=days, daydata=daydata)
+    if request.method == 'POST':
+        theweek = request.form.get('schedule')
+        print(theweek)
+        if theweek not in listWeekNames():
+            return render_template("message.html", message='INVALID WEEK')
+        theday = request.form.get('day')
+        if theday not in days:
+            return render_template("message.html", message='INVALID DAY')
+        thehour = int(request.form.get('hour'))
+        if thehour not in range(1, 25):
+            return render_template("message.html", message='INVALID HOUR')
+        thecolor = request.form.get('color')
+        if thecolor not in colors:
+            return render_template("message.html", message='UNAVAILABLE COLOR')
+        changeHourColor(theweek, theday, thehour, thecolor)
+        data = getSchedData(theweek)
+        return render_template("sched.html", headline=theweek, data=data)
+    else:
+        theweek = request.args.get('schedule')
+        data = getSchedData(theweek)
+        return render_template("sched.html", headline=theweek, data=data)
 
-
-# testing
-if __name__ == '__main__':
-    with app.app_context():
-        printAll()
-        deleteWeek('test')
-        printAll()
 
 # running web app
+if __name__ == '__main__':
+    app.run()
+# # testing
 # if __name__ == '__main__':
-#     app.run()
+#     with app.app_context():
+#         printAll()
